@@ -205,15 +205,6 @@ while test $# -gt 0; do
   esac
 done
 
-while test $0; do
-  case "$2" in
-    --install-libs)
-      shift
-      echo "Hello world";
-      ;;
-  esac
-done
-
 if ! test $# -gt 0; then
     printf "${RED}  ERROR\t\tNo argument. Use --help for information\n";
     exit
