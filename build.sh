@@ -84,7 +84,7 @@ current_filename=$(basename "$0")
 ## Message functions
 install_missing_libs() {
 	printf "${YELLOW}  WARNING\t\tMissing required library to build${NC}\n";
-	sudo apt install bc flex aptitude python-is-phyton3 -y;
+	sudo apt install bc flex aptitude python-is-python3 -y;
 	sudo aptitude install libssl-dev -y;
 }
 
