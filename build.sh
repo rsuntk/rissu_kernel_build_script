@@ -8,8 +8,7 @@
 
 # Start of "Export" variable
 ## Example: ANDROID_MAJOR_VERSION=q/r/s/t/u [q = 10, r = 11, s = 12, t = 13, u = 14]
-export ANDROID_MAJOR_VERSION=r ;
-ANDROID_CODE=$ANDROID_MAJOR_VERSION
+export ANDROID_MAJOR_VERSION= ;
 
 ## Example: ARCH=arm64 for arm64, or arm for arm32 arch
 export ARCH= ;
@@ -45,6 +44,7 @@ KERNEL_EXTENSION_TYPE=gz
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- #
 
 ## Determine android version, code and codenames
+ANDROID_CODE=$ANDROID_MAJOR_VERSION
 if [ $ANDROID_CODE = "q" ]; then
 	UNEXPORTED_PLATFORM_VERSION=10;
 	UNEXPORTED_ANDROID_CODENAME="Quince Tart";
@@ -84,8 +84,10 @@ current_filename=$(basename "$0")
 ## Message functions
 install_missing_libs() {
 	printf "${YELLOW}  WARNING\t\tMissing required library to build${NC}\n";
+ 	# Password required.
 	sudo apt install bc flex aptitude python-is-python3 -y;
-	sudo aptitude install libssl-dev -y;
+	# Install libssl-dev from Aptitude
+ 	sudo aptitude install libssl-dev -y;
 }
 
 build_summary() {
