@@ -31,6 +31,7 @@ Argument   | Function
 ```--dirty``` | Do a dirty build.
 ```--zero```     | Do a zero build.
 ```--help```  | Show script usage.
+```--version``` | Script version.
 
 ### What is the differences between clean, dirty and zero build?
 ```
