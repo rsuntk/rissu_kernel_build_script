@@ -8,7 +8,8 @@
 
 # Start of "Export" variable
 ## Example: ANDROID_MAJOR_VERSION=q/r/s/t/u [q = 10, r = 11, s = 12, t = 13, u = 14]
-export ANDROID_MAJOR_VERSION= ;
+export ANDROID_MAJOR_VERSION=r ;
+ANDROID_CODE=$ANDROID_MAJOR_VERSION
 
 ## Example: ARCH=arm64 for arm64, or arm for arm32 arch
 export ARCH= ;
@@ -44,7 +45,6 @@ KERNEL_EXTENSION_TYPE=gz
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- #
 
 ## Determine android version, code and codenames
-ANDROID_CODE=$ANDROID_MAJOR_VERSION
 if [ $ANDROID_CODE = "q" ]; then
 	UNEXPORTED_PLATFORM_VERSION=10;
 	UNEXPORTED_ANDROID_CODENAME="Quince Tart";
@@ -66,57 +66,61 @@ export PLATFORM_VERSION=$UNEXPORTED_PLATFORM_VERSION
 export ANDROID_CODENAME=$UNEXPORTED_ANDROID_CODENAME
 
 # Start of Important variable
+
+## Colors
 GREEN='\033[1;32m'
 RED='\033[1;31m' 
 BLUE='\033[1;34m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
-get_current_date=`date`
-bold=$(tput bold)
-highlight=$(tput smso)
-rm_highlight=$(tput rmso)
-current_filename=$(basename "$0")
+
+## Text Format & Functions
+CURRENT_DATE=`date`
+BOLD=$(tput bold)
+HIGHLIGHT=$(tput smso)
+UNHIGHLIGHT=$(tput rmso)
+CURRENT_FILENAME=$(basename "$0")
+
 # End of Important variable
-# Start of Build msg
 
-
+### Start of Build msg
 # Start of Functions
 ## Message functions
 install_missing_libs() {
-	printf "${YELLOW}  WARNING\t\tMissing required library to build${NC}\n";
- 	# Password required.
-	sudo apt install bc flex aptitude python-is-python3 -y;
-	# Install libssl-dev from Aptitude
- 	sudo aptitude install libssl-dev -y;
-}
-
+	printf "${YELLOW}  INST_LIB\t\tMissing required library to build${NC}\n";
+	# If you're using Github Dev or Gitpod, these library usually didn't installed.
+	sudo apt update && sudo apt install cpio bc flex aptitude python-is-python3 -y;
+	# Get libssl-dev from Aptitude
+	sudo aptitude install libssl-dev -y;
+};
+make_cmd() {
+	# Make command now separated as a function.
+	make -C $(pwd) O=$(pwd)/out KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y ;
+};
 build_summary() {
+	if ! test -f $(pwd)/config.cfg; then
+		config_missing;
+	fi
 	echo "\n\tRissu Kernel Build Script\n\tRissu Copyright (C) 2023";
 	
 	printf "${GREEN}\n  INIT\t\tPreparing build environment";
 	echo "";
 	printf "${BLUE}\n  SUMMARY\tAndroid Code: $ANDROID_MAJOR_VERSION\n  SUMMARY\tAndroid Codename: $ANDROID_CODENAME\n  SUMMARY\tAndroid Version: $PLATFORM_VERSION\n  SUMMARY\tArchitecture: $ARCH\n  SUMMARY\tDefconfig: $DEFCONFIG\n  SUMMARY\tBuild User: $KBUILD_BUILD_USER\n  SUMMARY\tBuild Host: $KBUILD_BUILD_HOST${GREEN}";
 	echo "";
-}
-
+};
 err_directory_not_found() {
-	printf "${RED}  ERROR\t\tDirectory ${highlight}'$(pwd)/out'${rm_highlight} didn't exist, use flag --zero to start zero build.\n${NC}";
-}
-
+	printf "${RED}  ERROR\t\tDirectory ${HIGHLIGHT}'$(pwd)/out'${UNHIGHLIGHT} didn't exist, use flag --zero to start zero build.\n${NC}";
+};
 completed() {
-	printf "${GREEN}\n### Build completed at $get_current_date ### \n\n";
-}
-
+	printf "${GREEN}\n### Build completed at $CURRENT_DATE ### \n\n";
+};
 failed() {
-	printf "${RED}\n### Build failed at $get_current_date ### \n\n";
-}
-
+	printf "${RED}\n### Build failed at $CURRENT_DATE ### \n\n";
+};
 remove_out() {
 	printf "${YELLOW}  REMOVE\t$(pwd)/out\n${NC}";
 	rm -rR out
-}
-
-
+};
 unset_var() {
 	unset PLATFORM_VERSION;
 	unset ANDROID_CODENAME;
@@ -127,7 +131,55 @@ unset_var() {
 	unset ANDROID_MAJOR_VERSION;
 	#unset CC;
 	#unset CROSS_COMPILE;
-}
+};
+prompt_failure() {
+	clear;
+	printf "\n${RED}Failed, build aborted. Missing value.\n";
+	exit;
+};
+## Upcoming features ..
+#prompt_build() {
+#	clear;
+#	printf "\n${YELLOW}No argument detected. Starting prompt build ..${NC}\n";
+#	printf "\n${BOLD}## Example: DEFCONFIG=a10s_defconfig${NC}\n";
+#	read -p "DEFCONFIG=" PROMPT_DEFCONFIG;
+#	printf "\n${BOLD}## Example: ARCH=arm64${NC}\n";
+#	read -p "ARCH=" PROMPT_ARCH;
+#	printf "\n${BOLD}## Example: ANDROID_MAJOR_VERSION=r [r = android 11]${NC}\n";
+#	read -p "ANDROID_MAJOR_VERSION=" PROMPT_ANDROID_CODE;
+#	printf "\n\n${BOLD}## Build Type: CLEAN, DIRTY & ZERO.${NC}\n";
+#	read -p "BUILD_TYPE=" PROMPT_BUILD_TYPE;
+#	
+#	export DEFCONFIG=$PROMPT_DEFCONFIG;
+#	export ARCH=$PROMPT_ARCH;
+#	export ANDROID_MAJOR_VERSION=$PROMPT_ANDROID_CODE;
+#	if [ $PROMPT_BUILD_TYPE = "clean" ] || [ $PROMPT_BUILD_TYPE = "Clean" ] || [ $PROMPT_BUILD_TYPE = "CLEAN" ]; then
+#		clean_build;
+#	elif [ $PROMPT_BUILD_TYPE = "dirty" ] || [ $PROMPT_BUILD_TYPE = "Dirty" ] || [ $PROMPT_BUILD_TYPE = "DIRTY" ]; then
+#		dirty_build;
+#	elif [ $PROMPT_BUILD_TYPE = "zero" ] || [ $PROMPT_BUILD_TYPE = "Zero" ] || [ $PROMPT_BUILD_TYPE = "ZERO" ]; then
+#		zero_build;
+#	else
+#		prompt_failure;
+#	fi
+#	unset_var;
+#};
+#
+#
+#generate_config() {
+#	CONFIG_FILE="
+#	# RKBS Configuration.
+#	# Edit if neccessary.
+#	ARCH=$ARCH;
+#	ANDROID_MAJOR_VERSION=$ANDROID_CODE;
+#	DEFCONFIG=$defconfig;
+#	KBUILD_BUILD_HOST=$KBUILD_BUILD_HOST;
+#	KBUILD_BUILD_USER=$KBUILD_BUILD_USER;
+#	";
+#	
+#	echo $CONFIG_FILE >> config.cfg
+#};
+
 ## PREPARE BUILD ENVIRONMENT
 if [ $INSTALL_MISSING_LIBS = "y" ]; then
 	install_missing_libs;
@@ -147,7 +199,7 @@ clean_build() {
 	fi
 	   
 	make -C $(pwd) O=$(pwd)/out KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y $(echo $DEFCONFIG) ;
-	make -C $(pwd) O=$(pwd)/out KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y ;
+	make_cmd;
 	if ! test -f $(pwd)/out/arch/$ARCH/boot/$KERNEL_IMAGE_TYPE.$KERNEL_EXTENSION_TYPE; then
   		failed
 	else
@@ -161,7 +213,7 @@ zero_build() {
 	build_summary;
 	printf "\n${GREEN}  INIT\t\tStarting zero build\n${NC}";
 	make -C $(pwd) O=$(pwd)/out KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y $(echo $DEFCONFIG) ;
-	make -C $(pwd) O=$(pwd)/out KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y ;
+	make_cmd;
 	if ! test -f $(pwd)/out/arch/$ARCH/boot/$KERNEL_IMAGE_TYPE.$KERNEL_EXTENSION_TYPE; then
   		failed
 	else
@@ -174,7 +226,7 @@ zero_build() {
 dirty_build() {
 	build_summary;
 	printf "\n${GREEN}  INIT\t\tStarting dirty build\n${NC}";
-	make -C $(pwd) O=$(pwd)/out KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y ;
+	make_cmd;
 	if ! test -f $(pwd)/out/arch/$ARCH/boot/$KERNEL_IMAGE_TYPE.$KERNEL_EXTENSION_TYPE; then
   		failed
 	else
@@ -208,6 +260,7 @@ while test $# -gt 0; do
 done
 
 if ! test $# -gt 0; then
-    printf "${RED}  ERROR\t\tNo argument. Use --help for information\n";
-    exit
+	printf "\n${RED}ERROR: No argument detected. use --help to show script usage.\n${NC}";
 fi
+
+#prompt_build;
