@@ -8,7 +8,7 @@
 
 # Start of "Export" variable
 ## Example: ANDROID_MAJOR_VERSION=q/r/s/t/u [q = 10, r = 11, s = 12, t = 13, u = 14]
-export ANDROID_MAJOR_VERSION=r ;
+export ANDROID_MAJOR_VERSION= ;
 ANDROID_CODE=$ANDROID_MAJOR_VERSION
 
 ## Example: ARCH=arm64 for arm64, or arm for arm32 arch
@@ -38,8 +38,8 @@ INSTALL_MISSING_LIBS=n
 #	KERNEL_EXTENSION_TYPE is gz/gz-dtb
 # 	A10s (OneUI 2 fw): gz-dtb
 # 	A10s (OneUI 3 fw): gz
-KERNEL_IMAGE_TYPE=Image
-KERNEL_EXTENSION_TYPE=gz
+KERNEL_IMAGE_TYPE=
+KERNEL_EXTENSION_TYPE=
 
 # End of "Export" variable
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- #
@@ -66,6 +66,8 @@ export PLATFORM_VERSION=$UNEXPORTED_PLATFORM_VERSION
 export ANDROID_CODENAME=$UNEXPORTED_ANDROID_CODENAME
 
 # Start of Important variable
+## Version
+SCRIPT_VER=v0.1.2_r2
 
 ## Colors
 GREEN='\033[1;32m'
@@ -255,6 +257,11 @@ while test $# -gt 0; do
       shift
       printf "Rissu Kernel Builder Script\nHow to use: $ sh $current_filename [ARGS]\nAvailable arguments:\n\t--clean - Do a clean build.\n\t--dirty - Do a dirty build.\n\t--zero  - Do a zero build.\n\t--help  - How to use this script.\n\n";
       exit 0;
+      ;;
+    --version)
+      shift
+      echo "Rissu Kernel Build Script $SCRIPT_VER";
+      exit;
       ;;
   esac
 done
