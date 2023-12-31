@@ -1,10 +1,10 @@
-# Rissu Kernel Builder Script
-> Currently, only support Debian based distros.
+<h1 align="center">Rissu Kernel Builder Script</h1>
+
+#### Note:
+- **Currently, only support _Debian_ based distros.**
+- **Only support for non-GKI Kernel**
 ## What is this?
-<p>
-A script to build samsung kernel.
-Not simple, but make it easier.
-</p>
+A script to build samsung kernel. Not simple, but make it easier.
 
 ## How to use?
 ### First, change some build variable
