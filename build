@@ -1,8 +1,10 @@
-#! /bin/bash
-# Rissu Kernel Builder Script.
+#! /bin/sh
+# Kernel Builder Script.
 
 # Rissu Copyright (C) 2023
 # Rissu Projekt Copyright (C) 2023
+
+# Current supported OS: Debian based distros.
 
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- #
 
@@ -24,6 +26,9 @@ export DEFCONFIG= # Put your defconfig here.
 export KBUILD_BUILD_USER=$(whoami)
 export KBUILD_BUILD_HOST=$(hostname)
 
+## Set total threads for compiling (Example: TOTAL_THREAD=-j128)
+TOTAL_THREAD=
+
 ## Install missing libs? [y = Install missing lib | n = Everything's ready, no need to install missing libs.]
 INSTALL_MISSING_LIBS=n
 
@@ -33,13 +38,16 @@ INSTALL_MISSING_LIBS=n
 ## Example: /home/rissu/clang-r383902/bin/clang
 #export CC=
 
+## Example: /home/rissu/aarch64-linux-gnu/bin/aarch64-linux-gnu-
+#export CLANG_TRIPLE=
+
 ## Info: 
 #	KERNEL_IMAGE_TYPE is neither zImage or Image or bzImage (Samsung usually use Image)
-#	KERNEL_EXTENSION_TYPE is gz/gz-dtb
+#	KERNEL_EXTENSION_TYPE is gz/gz-dtb or lz4 (every device is different)
 # 	A10s (OneUI 2 fw): gz-dtb
 # 	A10s (OneUI 3 fw): gz
-KERNEL_IMAGE_TYPE=
-KERNEL_EXTENSION_TYPE=
+KERNEL_IMAGE_TYPE=Image
+KERNEL_EXTENSION_TYPE=gz
 
 # End of "Export" variable
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- #
@@ -66,8 +74,6 @@ export PLATFORM_VERSION=$UNEXPORTED_PLATFORM_VERSION
 export ANDROID_CODENAME=$UNEXPORTED_ANDROID_CODENAME
 
 # Start of Important variable
-## Version
-SCRIPT_VER=v0.1.2_r2
 
 ## Colors
 GREEN='\033[1;32m'
@@ -89,20 +95,22 @@ CURRENT_FILENAME=$(basename "$0")
 # Start of Functions
 ## Message functions
 install_missing_libs() {
-	printf "${YELLOW}  INST_LIB\t\tMissing required library to build${NC}\n";
-	# If you're using Github Dev or Gitpod, these library usually didn't installed.
-	sudo apt update && sudo apt install cpio bc flex aptitude python-is-python3 -y;
+	printf "${YELLOW}  INST_LIB\t\tInstalling missing required library to build${NC}\n";
+	# If you're using Github Workspaces or Gitpod, these library usually didn't installed.
+	sudo apt update && sudo apt install cpio bc flex aptitude bison python-is-python3 -y;
 	# Get libssl-dev from Aptitude
 	sudo aptitude install libssl-dev -y;
 };
+
+## Edit these if neccessary (add like -j flags)
 make_cmd() {
 	# Make command now separated as a function.
-	make -C $(pwd) O=$(pwd)/out KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y ;
+	make -C $(pwd) O=$(pwd)/out KCFLAGS=-w CONFIG_SECTION_MISMATCH_WARN_ONLY=y $(echo $TOTAL_THREAD) ;
 };
 build_summary() {
-	if ! test -f $(pwd)/config.cfg; then
-		config_missing;
-	fi
+	#if ! test -f $(pwd)/config.cfg; then
+	#	config_missing;
+	#fi
 	echo "\n\tRissu Kernel Build Script\n\tRissu Copyright (C) 2023";
 	
 	printf "${GREEN}\n  INIT\t\tPreparing build environment";
@@ -131,60 +139,52 @@ unset_var() {
 	unset KBUILD_BUILD_HOST;
 	unset KBUILD_BUILD_USER;
 	unset ANDROID_MAJOR_VERSION;
-	#unset CC;
-	#unset CROSS_COMPILE;
+	unset CC;
+	unset CROSS_COMPILE;
+	unset CLANG_TRIPLE;
 };
 prompt_failure() {
 	clear;
-	printf "\n${RED}Failed, build aborted. Missing value.\n";
+	printf "\n${RED}Failed, build aborted. Missing value.\n\n";
 	exit;
 };
-## Upcoming features ..
-#prompt_build() {
-#	clear;
-#	printf "\n${YELLOW}No argument detected. Starting prompt build ..${NC}\n";
-#	printf "\n${BOLD}## Example: DEFCONFIG=a10s_defconfig${NC}\n";
-#	read -p "DEFCONFIG=" PROMPT_DEFCONFIG;
-#	printf "\n${BOLD}## Example: ARCH=arm64${NC}\n";
-#	read -p "ARCH=" PROMPT_ARCH;
-#	printf "\n${BOLD}## Example: ANDROID_MAJOR_VERSION=r [r = android 11]${NC}\n";
-#	read -p "ANDROID_MAJOR_VERSION=" PROMPT_ANDROID_CODE;
-#	printf "\n\n${BOLD}## Build Type: CLEAN, DIRTY & ZERO.${NC}\n";
-#	read -p "BUILD_TYPE=" PROMPT_BUILD_TYPE;
-#	
-#	export DEFCONFIG=$PROMPT_DEFCONFIG;
-#	export ARCH=$PROMPT_ARCH;
-#	export ANDROID_MAJOR_VERSION=$PROMPT_ANDROID_CODE;
-#	if [ $PROMPT_BUILD_TYPE = "clean" ] || [ $PROMPT_BUILD_TYPE = "Clean" ] || [ $PROMPT_BUILD_TYPE = "CLEAN" ]; then
-#		clean_build;
-#	elif [ $PROMPT_BUILD_TYPE = "dirty" ] || [ $PROMPT_BUILD_TYPE = "Dirty" ] || [ $PROMPT_BUILD_TYPE = "DIRTY" ]; then
-#		dirty_build;
-#	elif [ $PROMPT_BUILD_TYPE = "zero" ] || [ $PROMPT_BUILD_TYPE = "Zero" ] || [ $PROMPT_BUILD_TYPE = "ZERO" ]; then
-#		zero_build;
-#	else
-#		prompt_failure;
-#	fi
-#	unset_var;
-#};
-#
-#
-#generate_config() {
-#	CONFIG_FILE="
-#	# RKBS Configuration.
-#	# Edit if neccessary.
-#	ARCH=$ARCH;
-#	ANDROID_MAJOR_VERSION=$ANDROID_CODE;
-#	DEFCONFIG=$defconfig;
-#	KBUILD_BUILD_HOST=$KBUILD_BUILD_HOST;
-#	KBUILD_BUILD_USER=$KBUILD_BUILD_USER;
-#	";
-#	
-#	echo $CONFIG_FILE >> config.cfg
-#};
+prompt_build() {
+	clear;
+	printf "\n${YELLOW}No argument detected. Starting prompt build ..${NC}\n";
+	printf "\n${BOLD}## Example: DEFCONFIG=a10s_defconfig${NC}\n";
+	read -p "DEFCONFIG=" PROMPT_DEFCONFIG;
+	printf "\n${BOLD}## Example: ARCH=arm64${NC}\n";
+	read -p "ARCH=" PROMPT_ARCH;
+	printf "\n${BOLD}## Example: ANDROID_MAJOR_VERSION=r [r = android 11]${NC}\n";
+	read -p "ANDROID_MAJOR_VERSION=" PROMPT_ANDROID_CODE;
+	printf "\n${BOLD}## Example: PLATFORM_VERSION=11 [r = android 11]${NC}\n";
+	read -p "PLATFORM_VERSION=" PROMPT_PLATFORM_VERSION;
+	printf "\n\n${BOLD}## Build Type: CLEAN, DIRTY & ZERO.${NC}\n";
+	read -p "BUILD_TYPE=" PROMPT_BUILD_TYPE;
+	
+	export DEFCONFIG=$PROMPT_DEFCONFIG;
+	export ARCH=$PROMPT_ARCH;
+	export PLATFORM_VERSION=$PROMPT_PLATFORM_VERSION;
+	export SUBARCH=$ARCH;
+	export ANDROID_MAJOR_VERSION=$PROMPT_ANDROID_CODE;
+	if [ $PROMPT_BUILD_TYPE = "clean" ] || [ $PROMPT_BUILD_TYPE = "Clean" ] || [ $PROMPT_BUILD_TYPE = "CLEAN" ]; then
+		clean_build;
+	elif [ $PROMPT_BUILD_TYPE = "dirty" ] || [ $PROMPT_BUILD_TYPE = "Dirty" ] || [ $PROMPT_BUILD_TYPE = "DIRTY" ]; then
+		dirty_build;
+	elif [ $PROMPT_BUILD_TYPE = "zero" ] || [ $PROMPT_BUILD_TYPE = "Zero" ] || [ $PROMPT_BUILD_TYPE = "ZERO" ]; then
+		zero_build;
+	else
+		prompt_failure;
+		unset_var;
+		exit 0;
+	fi
+};
 
 ## PREPARE BUILD ENVIRONMENT
 if [ $INSTALL_MISSING_LIBS = "y" ]; then
 	install_missing_libs;
+else
+	printf "\n${YELLOW}  FLAGS\t\tINSTALL_MISSING_LIBS=$INSTALL_MISSING_LIBS, libs are ready.${NC}\n";
 fi
 
 ## Build functions
@@ -258,16 +258,7 @@ while test $# -gt 0; do
       printf "Rissu Kernel Builder Script\nHow to use: $ sh $current_filename [ARGS]\nAvailable arguments:\n\t--clean - Do a clean build.\n\t--dirty - Do a dirty build.\n\t--zero  - Do a zero build.\n\t--help  - How to use this script.\n\n";
       exit 0;
       ;;
-    --version)
-      shift
-      echo "Rissu Kernel Build Script $SCRIPT_VER";
-      exit;
-      ;;
   esac
 done
 
-if ! test $# -gt 0; then
-	printf "\n${RED}ERROR: No argument detected. use --help to show script usage.\n${NC}";
-fi
-
-#prompt_build;
+prompt_build;
