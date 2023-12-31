@@ -1,4 +1,5 @@
 # Rissu Kernel Builder Script
+> Currently, only support Debian based distros.
 ## What is this?
 <p>
 A script to build samsung kernel.
