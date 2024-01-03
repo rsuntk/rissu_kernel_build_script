@@ -51,6 +51,10 @@ Edit the build.sh, and change this variable:
 ```
 $ ./build [ARGS]
 ```
+or Prompt build
+```
+$ ./build
+```
 ### Available arguments
 Argument   | Function
 -------:|:-------------------------
